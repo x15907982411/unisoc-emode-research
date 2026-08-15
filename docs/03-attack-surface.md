@@ -31,16 +31,23 @@
 - 特权服务：全部为空壳或参数固定
 - 本次测试的 usermodehelper / socket / devmem 通道均被内核 + 安全策略拒绝
 
-## 测试边界（未覆盖攻击面）
+## 测试边界与补充测试
 
-本次评估聚焦于 Java/HIDL 层的命令执行与服务调用链，以下攻击面**未纳入测试**，上述结论不构成对这些路线的排除：
+本次评估聚焦于 Java/HIDL 层的命令执行与服务调用链。以下为评审后补充的测试记录与仍未覆盖的边界。
+
+### 已补充测试（2026-08-15）
+
+| 攻击面 | 结果 |
+|---|---|
+| 动态广播接收器注入（com.zte.emode / com.zte.emodeservice / com.sprd.engineermode 全量静态扫描）| **排除**：emode 14 处动态注册均为测试页 UI 刷新（USB/电池/蓝牙状态）或固定参数反射调用（`SlicManager.incomingCall` 参数不可控，仅可伪造"模拟来电"骚扰）；engineermode 4 处全部监听受保护系统广播（ACTION_SHUTDOWN / BATTERY_CHANGED / AIRPLANE_MODE / SIM_STATE），第三方无法伪造 |
+| ContentProvider 暴露面（同上三包 Manifest + 代码审计）| **排除**：三个应用均未声明 ContentProvider |
+| 内核漏洞版本复验 | 内核 **5.4.254**（2024-10-13 构建）：Dirty Pipe（修复线 5.4.180）与 Dirty COW（CVE-2016-5195）均超出受影响版本。注：厂商 BSP 补丁合入完整性未逐一 diff 验证 |
+
+### 仍未覆盖
 
 | 未覆盖面 | 说明 |
 |---|---|
-| 动态广播接收器注入 | 仅分析了静态组件，未检查动态注册的 BroadcastReceiver 是否存在 caller 校验缺失 |
-| ContentProvider 暴露面 | 未审计 emode 内 Provider 的 query/insert/update/delete（SQL 注入、路径遍历）|
 | Intent 重定向 | 未验证内部 startActivityForResult 转发外部 Intent 的逻辑（non-exported 组件调起绕过）|
-| Native 层内存漏洞 | 未分析 libemode.so 等 vendor 原生库（内存损坏类漏洞）|
-| 内核漏洞复验 | 未复验 Dirty Pipe / Dirty COW 等（Android 13 内核大概率已修补，但未实测排除）|
+| Native 层内存漏洞 | 未分析 libemode.so 等 vendor 原生库（内存损坏类漏洞，需 PC/调试环境）|
 
-因此"无用户空间 root 路线"的严谨表述为：**在已测试的 10 类攻击面范围内未发现可行路线**。
+因此"无用户空间 root 路线"的严谨表述为：**在已测试的攻击面范围内未发现可行路线**。
