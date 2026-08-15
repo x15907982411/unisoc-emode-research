@@ -28,7 +28,7 @@ payload 内嵌空格/分号/井号时，用 `${IFS}` + 双引号可可靠传递�
 
 > 后果：即使有可执行的 payload（如 HIDL 调用器 dex），**文件无法落地**，攻击链在第一步就断掉。
 
-## ❌ binder 调 system_server 全被封死
+## ❌ binder 调 system_server：测试调用全部被拦截
 
 实测（全部静默拦截，无输出无效果）：
 
@@ -52,4 +52,4 @@ service call VendorLogManagerService ...
 ## 结论
 
 引擎模式名义上是 system uid，实际被 SELinux 圈养在极小的能力圈里：
-**能执行命令，但写不了文件、调不了特权服务**——两条路都断。
+**能执行命令，但写不了文件、调不了特权服务**——在本次测试范围内，两条路都断。
