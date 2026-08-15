@@ -41,13 +41,13 @@
 |---|---|
 | 动态广播接收器注入（com.zte.emode / com.zte.emodeservice / com.sprd.engineermode 全量静态扫描）| **排除**：emode 14 处动态注册均为测试页 UI 刷新（USB/电池/蓝牙状态）或固定参数反射调用（`SlicManager.incomingCall` 参数不可控，仅可伪造"模拟来电"骚扰）；engineermode 4 处全部监听受保护系统广播（ACTION_SHUTDOWN / BATTERY_CHANGED / AIRPLANE_MODE / SIM_STATE），第三方无法伪造 |
 | ContentProvider 暴露面（同上三包 Manifest + 代码审计）| **排除**：三个应用均未声明 ContentProvider |
+| Intent 重定向（同上三包全量扫描）| **排除**：全库仅 2 处 startActivityForResult（emode），intent 均为内部构造（指纹测试 challenge）或系统固定 action（MANAGE_OVERLAY_PERMISSION）；无 getParcelableExtra 取 Intent 再 start 的模式；无 EXTRA_INTENT 使用；emodeservice / engineermode 零 startActivityForResult |
 | 内核漏洞版本复验 | 内核 **5.4.254**（2024-10-13 构建）：Dirty Pipe（修复线 5.4.180）与 Dirty COW（CVE-2016-5195）均超出受影响版本。注：厂商 BSP 补丁合入完整性未逐一 diff 验证 |
 
 ### 仍未覆盖
 
 | 未覆盖面 | 说明 |
 |---|---|
-| Intent 重定向 | 未验证内部 startActivityForResult 转发外部 Intent 的逻辑（non-exported 组件调起绕过）|
 | Native 层内存漏洞 | 未分析 libemode.so 等 vendor 原生库（内存损坏类漏洞，需 PC/调试环境）|
 
 因此"无用户空间 root 路线"的严谨表述为：**在已测试的攻击面范围内未发现可行路线**。
