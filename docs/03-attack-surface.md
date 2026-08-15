@@ -1,6 +1,6 @@
 # 03 · 攻击面穷尽清单
 
-引擎模式（system uid + sprd_engineermode_app 域）下尝试的 10 类攻击面，**全部失败**。
+引擎模式（system uid + sprd_engineermode_app 域）下**本次尝试**的 10 类攻击面，**全部失败**。
 
 ## 攻击面总表
 
@@ -25,8 +25,22 @@
 
 ## 最终结论
 
-**此设备无用户空间 root 路线。** 引擎模式（system uid）受 sprd_engineermode_app 域 SELinux 严格限制：
+**本次测试范围内未发现用户空间 root 路线。** 引擎模式（system uid）受 sprd_engineermode_app 域 SELinux 严格限制：
 
 - 写权限：除自身 app 数据目录外几乎全拒
 - 特权服务：全部为空壳或参数固定
-- 所有 usermodehelper / socket / devmem 通道被内核 + 安全策略封死
+- 本次测试的 usermodehelper / socket / devmem 通道均被内核 + 安全策略拒绝
+
+## 测试边界（未覆盖攻击面）
+
+本次评估聚焦于 Java/HIDL 层的命令执行与服务调用链，以下攻击面**未纳入测试**，上述结论不构成对这些路线的排除：
+
+| 未覆盖面 | 说明 |
+|---|---|
+| 动态广播接收器注入 | 仅分析了静态组件，未检查动态注册的 BroadcastReceiver 是否存在 caller 校验缺失 |
+| ContentProvider 暴露面 | 未审计 emode 内 Provider 的 query/insert/update/delete（SQL 注入、路径遍历）|
+| Intent 重定向 | 未验证内部 startActivityForResult 转发外部 Intent 的逻辑（non-exported 组件调起绕过）|
+| Native 层内存漏洞 | 未分析 libemode.so 等 vendor 原生库（内存损坏类漏洞）|
+| 内核漏洞复验 | 未复验 Dirty Pipe / Dirty COW 等（Android 13 内核大概率已修补，但未实测排除）|
+
+因此"无用户空间 root 路线"的严谨表述为：**在已测试的 10 类攻击面范围内未发现可行路线**。
