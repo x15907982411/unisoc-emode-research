@@ -23,7 +23,7 @@
 1. **暗码**：工程模式主入口 `*#*#83781#*#*`；破译 5 个指令暗码 + 7 个 SECRET_CODE（详见 [01](docs/01-instruction-chain.md)）
 2. **Android 13 拦截**：`queryIntentActivities(flags=0)` 在 API 33 默认过滤 non-exported 组件，导致所有指向 non-exported Activity 的指令**静默无响应**
 3. **SELinux 一票否决**（实测范围内）：引擎模式（system uid + `sprd_engineermode_app` 域）写权限极窄，binder 调 system_server 的测试调用全部被拦截
-4. **本次测试范围内未发现用户空间 root 路线**：尝试的 10 类攻击面全部失败（测试边界见 [docs/03](docs/03-attack-surface.md)）；Mali CVE-2022-38181 路线在本设备适配的 PoC 变体上未走通（BSP 定制差异）；公开可行路线 = **CVE-2022-38694 BROM 解锁 + Magisk**（需 PC + USB）
+4. **本次测试范围内未发现用户空间 root 路线**：尝试的 10 类攻击面全部失败，评审后补充测试（动态广播 / ContentProvider / 内核版本）亦未发现可行面（测试边界与补充测试见 [docs/03](docs/03-attack-surface.md)）；Mali CVE-2022-38181 路线在本设备适配的 PoC 变体上未走通（BSP 定制差异）；公开可行路线 = **CVE-2022-38694 BROM 解锁 + Magisk**（需 PC + USB）
 
 ## 🖥️ 设备档案
 
