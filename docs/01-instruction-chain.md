@@ -75,6 +75,8 @@ am startservice <同 intent>
 
 ## 5. 爆破方法学（未命中）
 
+> 校验逻辑基于反编译（`Command.smali`）理解：`md5(输入).hexdigest()[8:24].upper()`（MD5 中间 16 位）与 smali 内常量比对。若该校验理解有偏差，未命中结论仅对当前实现成立。
+
 针对 8 位×3 格式（bare / star / fullstar）全量爆破约 3e7 次——无命中；
 1-6 位无前导 0 ×3 格式约 3.3e6 次——无命中。
 
