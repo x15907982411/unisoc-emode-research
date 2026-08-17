@@ -4,7 +4,7 @@
 
 | 入口 | 方式 |
 |---|---|
-| 工程模式主界面 | 拨号盘 `*#*#83781#*#*` → `EngineerModeActivity`（com.sprd.engineermode）|
+| 工程模式主界面 | 拨号盘 `*#*#83781#*#*` → `EngineerModeActivity`（com.sprd.engineermode）——**需先设置属性 gate（见 §3.5）** |
 | 暗码输入页 | `EmodeKeypadActivity`（com.zte.emode），输入 `*#XXXXXX#` 格式指令 |
 
 ## 2. 触发条件（com.zte.emode）
@@ -45,6 +45,43 @@ am startservice <同 intent>
 
 受影响的指令类型：`BEIDOU_RCHIP` / `TMO_CARRIER_CONFIG` / `VERTU_PRODUCE_CMD` / `MAINTENANCE_MODE` / `DEVTOOLS` / `MAIN_MENU` 等。
 
+## 3.5 主界面属性 gate（2026-08-17 实锤）
+
+**`*#*#83781#*#*` 在 user build 上并非默认可用**——`EMStartReceiver.onReceive` 源码级确认：
+
+```java
+private static final String EMODE_ENABLE_KEY = "persist.sys.emode.enable";
+private static final String EMODE_SECOND_LEVEL_PWD_ENABLE = "persist.sys.snd.level.pwd";
+
+// 83781 分支：
+boolean z = DEBUG; // DEBUG = "eng"/"userdebug" build 才为 true
+if (z || (!z && "0".equals(SystemPropertiesProxy.get(EMODE_ENABLE_KEY, "1"))
+              && "1".equals(SystemPropertiesProxy.get(EMODE_SECOND_LEVEL_PWD_ENABLE, "0")))) {
+    i.setClass(context, EngineerModeActivity.class);
+    context.startActivity(i);
+}
+```
+
+**user build（`ro.debuggable=0`）下，83781 暗码生效必须同时满足：**
+
+| 属性 | 必须为 | 默认值 |
+|---|---|---|
+| `persist.sys.emode.enable` | `0` | `1` |
+| `persist.sys.snd.level.pwd` | `1` | `0` |
+
+出厂默认状态下条件不满足 → **暗码静默无效（界面无反应）**。
+
+**修复命令（shell 可写，立即生效，无需重启）：**
+
+```sh
+setprop persist.sys.emode.enable 0
+setprop persist.sys.snd.level.pwd 1
+```
+
+2026-08-17 实机验证成功：设置属性后拨号盘 `*#*#83781#*#*` 可正常呼出 EngineerModeActivity 主界面 ✅
+
+> 备选：`*#*#83782#*#*`（EngineerModeActivity_2）在源码中**无任何属性检查**，无条件直启。
+
 ## 4. 已破译暗码表
 
 ### 4.1 指令暗码（5 个）
@@ -63,8 +100,8 @@ am startservice <同 intent>
 
 | 暗码 | Activity | 条件 |
 |---|---|---|
-| `*#*#83781#*#*` | EngineerModeActivity（主界面，含 AdbShell 等全部模块入口）| 通用 |
-| `*#*#83782#*#*` | EngineerModeActivity_2 | 通用 |
+| `*#*#83781#*#*` | EngineerModeActivity（主界面，含 AdbShell 等全部模块入口）| **user build 需 `persist.sys.emode.enable=0` + `persist.sys.snd.level.pwd=1`（见 §3.5）** |
+| `*#*#83782#*#*` | EngineerModeActivity_2 | 无条件 |
 | `*#*#1688#*#*` | SensorsIDActivity | 通用 |
 | `*#*#33284#*#*` | EngineerModeActivity | 仅 ISharkL210c10 板 |
 | `*#*#0000#*#*` | PhoneInfoActivity | 仅 `ro.product.name` 含 ctcc |
