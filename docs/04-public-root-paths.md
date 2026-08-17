@@ -2,9 +2,11 @@
 
 在本次用户空间路线测试未发现可行方案后，公开可行的路线全部指向 **硬件/引导层**，需要 **Windows PC + USB 线**。
 
+> ⚠️ **勘误（2026-08-17）**：本文档最初基于「W200DS = UMS9230」的误判评估 38694 适用性。经实测确认本机平台为 **UMS9620**，且 **CVE-2022-38694 的 UMS9230 / UMS9620 两版工具包均已实测失败**（2026-08-16：9230 包刷入后设备重启、数据被清但 BL 未解锁；9620 包同样无效）。以下内容保留作路线记录，**适用性结论均已失效**。
+
 ## 路线 A：CVE-2022-38694 BROM 解锁 + Magisk（首选）
 
-**适用**：UMS9230（含 ZTE W200DS 同款）等展锐平台。
+**适用**：UMS9230 平台设备（⚠️ **本设备 W200DS 实际为 UMS9620，且 38694 双版工具包实测无效**）。
 
 ### 工具
 
@@ -32,7 +34,7 @@
 | [KiMiGuel/Root-Guide-Cubot-KingKong-ES-3](https://github.com/KiMiGuel/Root-Guide-Cubot-KingKong-ES-3---Unisoc-T615-ums9230-) | Cubot KingKong ES3（EMMC 版）| 100% 确认 |
 | [sloden1977-lang/ROOT-ZTE-X1001](https://github.com/sloden1977-lang/ROOT-ZTE-X1001) | ZTE Blade X1001（UMS9230，UFS 版）| UFS 差异 |
 
-> ⚠️ UMS9230 有 **EMMC / UFS** 两种存储版本，工具与流程略有差异。本设备（W200DS）确认 **EMMC**。
+> ⚠️ UMS9230 有 **EMMC / UFS** 两种存储版本，工具与流程略有差异。以上参考均为 UMS9230 设备，**不适用于本设备（UMS9620）**。
 
 ## 路线 B：fastboot token 解锁（有 PC 后第一验证项）
 
@@ -48,6 +50,8 @@ fastboot oem get_identifier_token
 fastboot flashing unlock_bootloader signature.bin
 # 音量下确认 → 格机 → 解锁完成
 ```
+
+> ⚠️ **实测结果（2026-08-16）**：本机 fastboot token 路线**无效**——`get_identifier_token` 可执行，但解锁需要对应私钥签名，私钥未知、官方不提供，此路不通。
 
 ## 路线 C：展锐 boot 无 ramdisk → system-root 法
 
@@ -80,17 +84,20 @@ spd_dump fdl <fdl1> 0x5500 fdl <fdl2> 0x9efffe00 exec write_part system system.i
 
 | 芯片 | 方案 |
 |---|---|
-| UMS9620 及更旧 | CVE-2022-38694 |
+| UMS9230 及更旧 | CVE-2022-38694 |
 | UMS312 / UMS512 / UD710 | CVE-2022-38691_38692 |
 | 通用 | Spectrum_UnlockBL_Tool（Unisoc 专用）|
 
-> **W200DS = UMS9230 → 仍属 38694 系**（路线 A）
+> ⚠️ **勘误**：此前写「W200DS = UMS9230 → 仍属 38694 系」——**错误**。本机实测为 **UMS9620**，且 38694 双版工具包（9230/9620）均已实测失败，root 目标已搁置。
 
 ## 总结
 
 ```
-有 PC 时验证顺序：
-1. fastboot token 解锁（路线 B）——若支持，最简最安全
-2. CVE-2022-38694 BROM 解锁（路线 A）——通用方案
-3. system-root 法（路线 C）——解决 boot 无 ramdisk 的 Magisk 植入问题
+实测结论（2026-08-16）：
+1. fastboot token 解锁（路线 B）——私钥未知，无效
+2. CVE-2022-38694 BROM 解锁（路线 A）——9230/9620 双包均无效
+3. system-root 法（路线 C）——未实施（依赖 9008/spd_dump 通道，风险高）
+
+后续方向（2026-08-17 新线索）：recovery 模式可挂载系统分区（待验证），
+见仓库外研究笔记；root 目标当前处于搁置状态。
 ```
